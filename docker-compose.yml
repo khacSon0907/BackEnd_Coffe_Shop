@@ -1,0 +1,9 @@
+version: '3.8'  # Phiên bản Docker Compose sử dụng
+
+services:
+  redis:  # Tên service, có thể gọi lại khi cần liên kết với backend
+    image: redis:latest  # Dùng image Redis mới nhất từ Docker Hub
+    container_name: redis_server  # Tên container tùy chọn cho dễ nhớ
+    ports:
+      - "6379:6379"  # Mở cổng 6379 bên trong container ra cổng 6379 máy host
+    restart: always  # Tự khởi động lại nếu container tắt đột ngột

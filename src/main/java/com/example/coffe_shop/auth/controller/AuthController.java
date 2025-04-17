@@ -1,8 +1,7 @@
 package com.example.coffe_shop.auth.controller;
 
 
-import com.example.coffe_shop.auth.dto.LoginRequest;
-import com.example.coffe_shop.auth.dto.RegisterRequest;
+import com.example.coffe_shop.auth.dto.*;
 import com.example.coffe_shop.auth.model.User;
 import com.example.coffe_shop.auth.service.AuthService;
 import com.example.coffe_shop.response.ResponseMessage;
@@ -14,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("api/auth")
 @RequiredArgsConstructor
@@ -22,11 +23,22 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseMessage<User>> register(@Valid @RequestBody RegisterRequest registerRequest){
+    public ResponseEntity<ResponseMessage<Map<String, String>>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(authService.register(registerRequest));
     }
+
     @PostMapping("/login")
-    public ResponseEntity<ResponseMessage<User>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<ResponseMessage<JwtResponse>> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ResponseMessage<User>> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        return ResponseEntity.ok(authService.verifyOtp(request));
+    }
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ResponseMessage<JwtResponse>> refreshToken(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
 }
