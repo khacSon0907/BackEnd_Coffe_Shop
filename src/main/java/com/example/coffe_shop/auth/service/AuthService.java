@@ -31,12 +31,17 @@ public class AuthService {
     // refreshToken khi accen hết hạn
     public ResponseMessage<JwtResponse> refreshToken(RefreshTokenRequest request) {
         String tokenSaved = otpRedisService.getRefreshToken(request.getEmail());
+        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
 
         if (tokenSaved == null || !tokenSaved.equals(request.getRefreshToken())) {
             return new ResponseMessage<>(false, "Refresh token không hợp lệ hoặc đã hết hạn!", null);
         }
 
-        String newAccessToken = jwtService.generateAccessToken(request.getEmail());
+        if(userOptional.isEmpty()){
+            return new ResponseMessage<>(false, "Email lỗi !", null);
+        }
+
+        String newAccessToken = jwtService.generateAccessToken(request.getEmail(),userOptional.get().getRole());
         return new ResponseMessage<>(true, "Làm mới accessToken thành công!", new JwtResponse(newAccessToken, request.getRefreshToken()));
     }
 
@@ -88,11 +93,17 @@ public class AuthService {
     public ResponseMessage<JwtResponse> login(LoginRequest request) {
         Optional<User> optional = userRepository.findByEmail(request.getEmail());
 
-        if (optional.isEmpty() || !passwordEncoder.matches(request.getPassword(), optional.get().getPassword())) {
-            return new ResponseMessage<>(false, "Email hoặc mật khẩu không đúng!", null);
+        if(optional.isEmpty()){
+            return new ResponseMessage<>(false, " Email không tồn tại !", null);
         }
 
-        String accessToken = jwtService.generateAccessToken(request.getEmail());
+        if (!passwordEncoder.matches(request.getPassword(), optional.get().getPassword())) {
+            return new ResponseMessage<>(false, " mật khẩu không đúng!", null);
+        }
+
+        User user = userRepository.findByEmail(request.getEmail()).get();
+        String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getRole());
+
         String refreshToken = UUID.randomUUID().toString();
         otpRedisService.saveRefreshToken(request.getEmail(), refreshToken, 10080); // 7 ngày
 
@@ -129,6 +140,7 @@ public class AuthService {
                     .password(node.get("password").asText())
                     .fullname(node.get("fullname").asText())
                     .phoneNumber(node.get("phoneNumber").asText())
+                    .role("USER")
                     .build();
 
             User saved = userRepository.save(user);
