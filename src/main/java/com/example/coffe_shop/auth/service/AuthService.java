@@ -141,6 +141,7 @@ public class AuthService {
                     .fullname(node.get("fullname").asText())
                     .phoneNumber(node.get("phoneNumber").asText())
                     .role("USER")
+                    .active(true)
                     .build();
 
             User saved = userRepository.save(user);

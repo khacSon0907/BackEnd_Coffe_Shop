@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends GenericFilter {
 
                 var auth = new UsernamePasswordAuthenticationToken(
                         email, null, List.of(new SimpleGrantedAuthority(role))
-
                 );
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
                 SecurityContextHolder.getContext().setAuthentication(auth);

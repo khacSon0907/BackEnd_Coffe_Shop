@@ -27,10 +27,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()    // Auth API không cần token
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // chỉ ADMIN mới được
+                        .requestMatchers("/api/admin/**").permitAll()     //hasRole("ADMIN") // chỉ ADMIN mới được
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN","USER") // USER, ADMIN đều được
                         .anyRequest().authenticated()   // còn lại cần token
                 )
+
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // không dùng session
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // thêm filter JWT
                 .build();
