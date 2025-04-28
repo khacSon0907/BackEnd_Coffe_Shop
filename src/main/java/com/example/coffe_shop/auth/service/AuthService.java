@@ -3,6 +3,7 @@ package com.example.coffe_shop.auth.service;
 import com.example.coffe_shop.auth.dto.*;
 
 import com.example.coffe_shop.auth.model.User;
+import com.example.coffe_shop.auth.model.UserPrincipal;
 import com.example.coffe_shop.auth.repository.UserRepository;
 import com.example.coffe_shop.response.ResponseMessage;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -40,8 +42,18 @@ public class AuthService {
         if(userOptional.isEmpty()){
             return new ResponseMessage<>(false, "Email lỗi !", null);
         }
+        User user = userOptional.get();
+        UserPrincipal userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getRole(),
+                user.isActive()
+        );
+        String newAccessToken = jwtService.generateAccessToken(userPrincipal);
 
-        String newAccessToken = jwtService.generateAccessToken(request.getEmail(),userOptional.get().getRole());
+
+
         return new ResponseMessage<>(true, "Làm mới accessToken thành công!", new JwtResponse(newAccessToken, request.getRefreshToken()));
     }
 
@@ -89,30 +101,37 @@ public class AuthService {
     }
 
 
-    // đăng nhập
+
+    // Đăng nhập
     public ResponseMessage<JwtResponse> login(LoginRequest request) {
         Optional<User> optional = userRepository.findByEmail(request.getEmail());
 
-        if(optional.isEmpty()){
-            return new ResponseMessage<>(false, " Email không tồn tại !", null);
+        if (optional.isEmpty()) {
+            return new ResponseMessage<>(false, "Email không tồn tại!", null);
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), optional.get().getPassword())) {
-            return new ResponseMessage<>(false, " mật khẩu không đúng!", null);
+        User user = optional.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return new ResponseMessage<>(false, "Mật khẩu không đúng!", null);
         }
 
-        User user = userRepository.findByEmail(request.getEmail()).get();
-        String accessToken = jwtService.generateAccessToken(user.getEmail(), user.getRole());
+        // Chuyển User → UserPrincipal
+        UserPrincipal userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getRole(),
+                user.isActive()
+        );
 
+        String accessToken = jwtService.generateAccessToken(userPrincipal);
         String refreshToken = UUID.randomUUID().toString();
+
         otpRedisService.saveRefreshToken(request.getEmail(), refreshToken, 10080); // 7 ngày
-
-
-        // TODO: lưu refreshToken vào Redis nếu cần kiểm soát
 
         return new ResponseMessage<>(true, "Đăng nhập thành công", new JwtResponse(accessToken, refreshToken));
     }
-
 
 
 
@@ -140,8 +159,9 @@ public class AuthService {
                     .password(node.get("password").asText())
                     .fullname(node.get("fullname").asText())
                     .phoneNumber(node.get("phoneNumber").asText())
-                    .role("USER")
+                    .role("ADMIN")
                     .active(true)
+                    .createdAt(LocalDate.now())
                     .build();
 
             User saved = userRepository.save(user);

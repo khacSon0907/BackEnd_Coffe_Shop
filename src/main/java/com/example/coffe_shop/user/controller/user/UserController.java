@@ -1,11 +1,13 @@
-package com.example.coffe_shop.user.controller;
+package com.example.coffe_shop.user.controller.user;
 
-
+import com.example.coffe_shop.auth.model.UserPrincipal;
 import com.example.coffe_shop.auth.model.User;
 import com.example.coffe_shop.response.ResponseMessage;
 import com.example.coffe_shop.user.dto.ChangePasswordRequest;
+import com.example.coffe_shop.user.dto.ResetPasswordRequest;
 import com.example.coffe_shop.user.dto.UpdateUserRequest;
 import com.example.coffe_shop.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,34 +20,30 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
-
     private final UserService userService;
 
 
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @GetMapping("/all")
-    public ResponseEntity<ResponseMessage<List<User>>> getAllUser(){
-        return ResponseEntity.ok(userService.getAllUser());
-    }
+
 
     @GetMapping("/delete/{id}")
-    public ResponseEntity<ResponseMessage<String>> deleteUserById(@PathVariable String id){
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ResponseMessage<String>> deleteUserById(@PathVariable String id) {
         return ResponseEntity.ok(userService.deleteUserbyId(id));
     }
 
     @PutMapping("/change-password")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<ResponseMessage<String>> changePassword(
-            @RequestBody ChangePasswordRequest request,
-            @AuthenticationPrincipal String email) {
-        return ResponseEntity.ok(userService.changePassword(email, request));
+             @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(userService.changePassword(userPrincipal.getEmail(), request));
     }
 
-
-    @PutMapping("/update")
+    @PutMapping("/update-user")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    public ResponseEntity<ResponseMessage<User>> updateUser(@RequestBody UpdateUserRequest request,
-                                                            @AuthenticationPrincipal String email) {
-        return ResponseEntity.ok(userService.updateUser(email, request));
+    public ResponseEntity<ResponseMessage<User>> updateUser(
+            @RequestBody UpdateUserRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(userService.updateUser(userPrincipal.getEmail(), request));
     }
 }

@@ -1,6 +1,6 @@
 package com.example.coffe_shop.auth.service;
 
-
+import com.example.coffe_shop.auth.model.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,47 +15,32 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000; // 15p
+    private static final long ACCESS_TOKEN_EXPIRATION = 15 * 60 * 1000; // 15 phút
 
     @Value("${jwt.secret}")
     private String secretKey;
-
-
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(String email,String role) {
+    /**
+     * Sinh Access Token từ UserPrincipal
+     */
+    public String generateAccessToken(UserPrincipal userPrincipal) {
         return Jwts.builder()
-                .setSubject(email)
-                .claim("role", "ROLE_" + role)
+                .setSubject(userPrincipal.getEmail())
+                .claim("id", userPrincipal.getId())
+                .claim("role", "ROLE_" +  userPrincipal.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String extractEmail(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    public boolean isValid(String token) {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
+    /**
+     * Parse token và lấy ra toàn bộ claims
+     */
     public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -64,4 +49,36 @@ public class JwtService {
                 .getBody();
     }
 
+    /**
+     * Kiểm tra token còn hợp lệ không
+     */
+    public boolean isValid(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Lấy email từ token
+     */
+    public String extractEmail(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+    /**
+     * Lấy userId từ token
+     */
+    public String extractUserId(String token) {
+        return extractAllClaims(token).get("id", String.class);
+    }
+
+    /**
+     * Lấy role từ token
+     */
+    public String extractUserRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
 }

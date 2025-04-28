@@ -26,10 +26,8 @@ public class User {
     private String role;
     private boolean active;                     // Trạng thái hoạt động (đã nghỉ việc?)
     private String gender;                      // Giới tính
-
-    private LocalDate dateOfBirth;
-    private LocalDate createdAt;
-
+    private LocalDate dateOfBirth;              // ngay sinh nam sinh
+    private LocalDate createdAt;                // Ngày tao tai khoan
     private String avatarUrl;                    // Link ảnh đại diện
     private String address;                      // địa chỉ ;
 }

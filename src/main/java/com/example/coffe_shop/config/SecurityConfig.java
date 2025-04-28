@@ -26,8 +26,8 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()    // Auth API không cần token
-                        .requestMatchers("/api/admin/**").permitAll()     //hasRole("ADMIN") // chỉ ADMIN mới được
+                        .requestMatchers("/api/auth/**").permitAll()// Auth API không cần token
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // chỉ ADMIN mới được
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN","USER") // USER, ADMIN đều được
                         .anyRequest().authenticated()   // còn lại cần token
                 )

@@ -5,8 +5,12 @@ import com.example.coffe_shop.auth.dto.*;
 import com.example.coffe_shop.auth.model.User;
 import com.example.coffe_shop.auth.service.AuthService;
 import com.example.coffe_shop.response.ResponseMessage;
+import com.example.coffe_shop.user.dto.ForgetPasswordRequest;
+import com.example.coffe_shop.user.dto.ResetPasswordRequest;
+import com.example.coffe_shop.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +25,20 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
+
+    @PostMapping("/forget-password")
+    public ResponseEntity<ResponseMessage<Map<String,String>>> forgetPassword(@Valid @RequestBody ForgetPasswordRequest request) {
+        return ResponseEntity.ok(userService.sendForgetPasswordOtp(request));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ResponseMessage<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(userService.resetPassword(request));
+    }
+
+
 
     @PostMapping("/register")
     public ResponseEntity<ResponseMessage<Map<String, String>>> register(@Valid @RequestBody RegisterRequest registerRequest) {

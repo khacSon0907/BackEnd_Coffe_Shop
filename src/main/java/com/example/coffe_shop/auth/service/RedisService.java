@@ -1,5 +1,7 @@
 package com.example.coffe_shop.auth.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,20 @@ public class RedisService {
 
     public void deleteOtp(String token) {
         redisTemplate.delete("otp_token:" + token);
+    }
+    public String getEmailFromToken(String token) {
+        String json = redisTemplate.opsForValue().get("otp_token:" + token);
+        if (json == null) {
+            return null;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(json);
+            return node.get("email").asText();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi đọc email từ token Redis", e);
+        }
     }
 
 
