@@ -50,6 +50,15 @@
 		</dependency>
 
 
+		<!-- Swagger OpenAPI -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.3.0</version> <!-- phiên bản mới nhất 2024 -->
+		</dependency>
+
+
+
 		<!-- Redis để lưu OTP với TTL -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

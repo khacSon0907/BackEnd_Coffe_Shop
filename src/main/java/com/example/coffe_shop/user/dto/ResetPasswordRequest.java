@@ -1,6 +1,5 @@
 package com.example.coffe_shop.user.dto;
 
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -16,9 +15,6 @@ public class ResetPasswordRequest {
     private String token;
 
     @NotBlank
-    private String otp;
-
-    @NotBlank
-    @Size(min = 6, message = "Mật khẩu mới ít nhất 6 ký tự")
+    @Size(min = 6, message = "Mật khẩu mới phải ít nhất 6 ký tự")
     private String newPassword;
 }

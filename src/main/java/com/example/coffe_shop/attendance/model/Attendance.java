@@ -2,7 +2,8 @@ package com.example.coffe_shop.attendance.model;
 
 
 import lombok.*;
-        import org.springframework.data.annotation.Id;
+import org.springframework.cglib.core.Local;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -20,5 +21,5 @@ public class Attendance {
     private LocalDateTime checkInTime;      // giovao
     private LocalDateTime checkOutTime;     // gio ra
     private String note; // Ghi chú (nếu có)
-
+    private String ip;
 }

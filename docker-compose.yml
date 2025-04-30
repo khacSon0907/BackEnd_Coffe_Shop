@@ -7,3 +7,4 @@ services:
     ports:
       - "6379:6379"  # Mở cổng 6379 bên trong container ra cổng 6379 máy host
     restart: always  # Tự khởi động lại nếu container tắt đột ngột
+  monogo:

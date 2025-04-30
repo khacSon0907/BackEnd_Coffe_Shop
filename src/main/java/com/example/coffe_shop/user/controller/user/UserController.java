@@ -4,7 +4,6 @@ import com.example.coffe_shop.auth.model.UserPrincipal;
 import com.example.coffe_shop.auth.model.User;
 import com.example.coffe_shop.response.ResponseMessage;
 import com.example.coffe_shop.user.dto.ChangePasswordRequest;
-import com.example.coffe_shop.user.dto.ResetPasswordRequest;
 import com.example.coffe_shop.user.dto.UpdateUserRequest;
 import com.example.coffe_shop.user.service.UserService;
 import jakarta.validation.Valid;
@@ -13,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

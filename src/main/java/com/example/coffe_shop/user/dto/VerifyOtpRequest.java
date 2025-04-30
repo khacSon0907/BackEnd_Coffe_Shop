@@ -1,12 +1,14 @@
 package com.example.coffe_shop.user.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class ForgetPasswordRequest {
-    @Email
+public class VerifyOtpRequest {
+
     @NotBlank
-    private String email ;
+    private String token;
+
+    @NotBlank
+    private String otp;
 }
