@@ -29,7 +29,6 @@ public class AuthService {
     private final RedisService otpRedisService;
     private final JwtService jwtService;
 
-
     // refreshToken khi accen hết hạn
     public ResponseMessage<JwtResponse> refreshToken(RefreshTokenRequest request) {
         String tokenSaved = otpRedisService.getRefreshToken(request.getEmail());
@@ -56,7 +55,6 @@ public class AuthService {
 
         return new ResponseMessage<>(true, "Làm mới accessToken thành công!", new JwtResponse(newAccessToken, request.getRefreshToken()));
     }
-
 
     // đăng ký tạo tài khoản user
     public ResponseMessage<Map<String, String>> register(RegisterRequest request) {
@@ -115,6 +113,10 @@ public class AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return new ResponseMessage<>(false, "Mật khẩu không đúng!", null);
         }
+        if (!user.isActive()) {
+            return new ResponseMessage<>(false, "Tài khoản đã ngừng hoạt động!", null);
+        }
+
 
         // Chuyển User → UserPrincipal
         UserPrincipal userPrincipal = new UserPrincipal(

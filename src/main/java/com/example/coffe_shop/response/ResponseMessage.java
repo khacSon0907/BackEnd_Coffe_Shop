@@ -1,7 +1,5 @@
 package com.example.coffe_shop.response;
 
-
-
 public class ResponseMessage<T> {
 
     private boolean success;

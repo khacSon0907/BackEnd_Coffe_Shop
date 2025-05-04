@@ -27,7 +27,6 @@ public class AuthController {
     private final UserService userService;
 
 
-
     @PostMapping("/forget-password")
     public ResponseEntity<ResponseMessage<Map<String, String>>> forgetPassword(
             @Valid @RequestBody ForgetPasswordRequest request) {

@@ -19,16 +19,13 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
-
-
-
     @GetMapping("/delete/{id}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ResponseMessage<String>> deleteUserById(@PathVariable String id) {
         return ResponseEntity.ok(userService.deleteUserbyId(id));
     }
 
-    @PutMapping("/change-password")
+    @PutMapping("/me/change-password")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<ResponseMessage<String>> changePassword(
              @Valid @RequestBody ChangePasswordRequest request,
