@@ -8,60 +8,66 @@ import com.example.coffe_shop.auth.repository.UserRepository;
 import com.example.coffe_shop.response.ResponseMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.MailSendException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final EmailValidationService emailValidationService;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final RedisService otpRedisService;
     private final JwtService jwtService;
 
-    // refreshToken khi accen hết hạn
-    public ResponseMessage<JwtResponse> refreshToken(RefreshTokenRequest request) {
-        String tokenSaved = otpRedisService.getRefreshToken(request.getEmail());
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+//     refreshToken khi accen hết hạn
+//public ResponseMessage<JwtResponse> refreshToken(RefreshTokenRequest request) {
+//    String tokenSaved = otpRedisService.getRefreshToken(request.getEmail());
+//
+//    if (tokenSaved == null || !tokenSaved.equals(request.getRefreshToken())) {
+//        return new ResponseMessage(false, "Refresh token không hợp lệ hoặc đã hết hạn!", null);
+//    }
+//
+//    Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+//    if (userOptional.isEmpty()) {
+//        return new ResponseMessage(false, "Email lỗi !", null);
+//
+//    }
+//
+//    User user = userOptional.get();
+//
+//    UserPrincipal userPrincipal = new UserPrincipal(
+//            user.getId(),
+//            user.getEmail(),
+//            user.getPassword(),
+//            user.getRole(),
+//            user.isActive()
+//    );
+//
+//    String newAccessToken = jwtService.generateAccessToken(userPrincipal);
+//
+//    return new ResponseMessage<>(true, " Làm mới accessToken thành công! ", new JwtResponse(newAccessToken));
+//
+//}
 
-        if (tokenSaved == null || !tokenSaved.equals(request.getRefreshToken())) {
-            return new ResponseMessage<>(false, "Refresh token không hợp lệ hoặc đã hết hạn!", null);
-        }
 
-        if(userOptional.isEmpty()){
-            return new ResponseMessage<>(false, "Email lỗi !", null);
-        }
-        User user = userOptional.get();
-        UserPrincipal userPrincipal = new UserPrincipal(
-                user.getId(),
-                user.getEmail(),
-                user.getPassword(),
-                user.getRole(),
-                user.isActive()
-        );
-        String newAccessToken = jwtService.generateAccessToken(userPrincipal);
-
-
-
-        return new ResponseMessage<>(true, "Làm mới accessToken thành công!", new JwtResponse(newAccessToken, request.getRefreshToken()));
-    }
 
     // đăng ký tạo tài khoản user
     public ResponseMessage<Map<String, String>> register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return new ResponseMessage<>(false, "Email đã tồn tại!", null);
         }
-
         // tạo OTP
         String otp = String.format("%06d", new java.util.Random().nextInt(999999));
 
@@ -85,12 +91,11 @@ public class AuthService {
                 otp
         );
 
-        try {
-            //  Nếu gửi thất bại → ném lỗi
-            emailService.sendOtpEmail(request.getEmail(), otp);
-        } catch (Exception e) {
-            return new ResponseMessage<>(false, "Không thể gửi email OTP. Vui lòng kiểm tra lại địa chỉ email!", null);
+        if (!emailValidationService.isValidEmail(request.getEmail())) {
+            return new ResponseMessage<>(false, "Email không tồn tại hoặc không hợp lệ!", null);
         }
+
+         emailService.sendOtpEmail(request.getEmail(), otp);
         otpRedisService.saveOtp(token, jsonData, 5);
 
         Map<String, String> data = new HashMap<>();
@@ -98,10 +103,7 @@ public class AuthService {
         return new ResponseMessage<>(true, "OTP đã gửi về email!",data);
     }
 
-
-
-    // Đăng nhập
-    public ResponseMessage<JwtResponse> login(LoginRequest request) {
+    public ResponseMessage<JwtResponse> login(LoginRequest request, HttpServletResponse response) {
         Optional<User> optional = userRepository.findByEmail(request.getEmail());
 
         if (optional.isEmpty()) {
@@ -129,10 +131,17 @@ public class AuthService {
 
         String accessToken = jwtService.generateAccessToken(userPrincipal);
         String refreshToken = UUID.randomUUID().toString();
-
         otpRedisService.saveRefreshToken(request.getEmail(), refreshToken, 10080); // 7 ngày
 
-        return new ResponseMessage<>(true, "Đăng nhập thành công", new JwtResponse(accessToken, refreshToken));
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // dùng HTTPS mới bật cái này
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngày
+
+        response.addCookie(cookie);
+
+        return new ResponseMessage<>(true, "Đăng nhập thành công", new JwtResponse(accessToken));
     }
 
 
@@ -161,9 +170,10 @@ public class AuthService {
                     .password(node.get("password").asText())
                     .fullname(node.get("fullname").asText())
                     .phoneNumber(node.get("phoneNumber").asText())
-                    .role("ADMIN")
+                    .role("USER")
                     .active(true)
                     .createdAt(LocalDate.now())
+                    .allowedIp("113.173.2.148")
                     .build();
 
             User saved = userRepository.save(user);

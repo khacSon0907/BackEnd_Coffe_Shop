@@ -8,12 +8,10 @@ import com.example.coffe_shop.response.ResponseMessage;
 import com.example.coffe_shop.user.dto.ForgetPasswordRequest;
 import com.example.coffe_shop.user.dto.ResetPasswordRequest;
 import com.example.coffe_shop.user.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.Map;
@@ -26,6 +24,17 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
 
+    //sẽ gửi mã otp về email mà bạn đăng ký
+    @PostMapping("/register")
+    public ResponseEntity<ResponseMessage<Map<String, String>>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        return ResponseEntity.ok(authService.register(registerRequest));
+    }
+
+    //nhâp email mà bạn đã đăng ký
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ResponseMessage<User>> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        return ResponseEntity.ok(authService.verifyOtp(request));
+    }
 
     @PostMapping("/forget-password")
     public ResponseEntity<ResponseMessage<Map<String, String>>> forgetPassword(
@@ -45,23 +54,17 @@ public class AuthController {
         return ResponseEntity.ok(userService.resetPassword(request));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ResponseMessage<Map<String, String>>> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        return ResponseEntity.ok(authService.register(registerRequest));
-    }
+
+
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseMessage<JwtResponse>> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<ResponseMessage<JwtResponse>> login(
+            @RequestBody LoginRequest request,
+            HttpServletResponse response) {
+        return ResponseEntity.ok(authService.login(request, response));
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<ResponseMessage<User>> verifyOtp(@RequestBody VerifyOtpRequest request) {
-        return ResponseEntity.ok(authService.verifyOtp(request));
-    }
-    @PostMapping("/refresh-token")
-    public ResponseEntity<ResponseMessage<JwtResponse>> refreshToken(@RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refreshToken(request));
-    }
+
+
 
 }

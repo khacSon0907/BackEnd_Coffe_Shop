@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()// Auth API không cần token
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") // chỉ ADMIN mới được
                         .requestMatchers("/api/users/**").hasAnyRole("ADMIN","USER") // USER, ADMIN đều được
+                        .requestMatchers("/api/attendance/**").hasAnyRole("ADMIN","USER") // USER, ADMIN đều được
                         .anyRequest().authenticated()   // còn lại cần token
                 )
 

@@ -30,4 +30,5 @@ public class User {
     private LocalDate createdAt;                // Ngày tao tai khoan
     private String avatarUrl;                    // Link ảnh đại diện
     private String address;                      // địa chỉ ;
+    private String allowedIp;   
 }
