@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -49,6 +50,20 @@ public class RedisService {
     public String getRefreshToken(String email) {
         return redisTemplate.opsForValue().get("refresh:" + email);
     }
+
+    public String getEmailFromRefreshToken(String refreshToken) {
+        Set<String> keys = redisTemplate.keys("refresh:*");
+        if (keys != null) {
+            for (String key : keys) {
+                String value = redisTemplate.opsForValue().get(key);
+                if (refreshToken.equals(value)) {
+                    return key.replace("refresh:", "");
+                }
+            }
+        }
+        return null;
+    }
+
 
     public void deleteRefreshToken(String email) {
         redisTemplate.delete("refresh:" + email);

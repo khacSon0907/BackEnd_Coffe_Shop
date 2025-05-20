@@ -1,20 +1,27 @@
 package com.example.coffe_shop.user.service;
 
 
+import com.example.coffe_shop.auth.dto.JwtResponse;
+import com.example.coffe_shop.auth.dto.RefreshTokenRequest;
 import com.example.coffe_shop.auth.dto.VerifyOtpRequest;
 import com.example.coffe_shop.auth.model.User;
+import com.example.coffe_shop.auth.model.UserPrincipal;
 import com.example.coffe_shop.auth.repository.UserRepository;
 import com.example.coffe_shop.auth.service.EmailService;
+import com.example.coffe_shop.auth.service.JwtService;
 import com.example.coffe_shop.auth.service.RedisService;
 import com.example.coffe_shop.response.ResponseMessage;
 import com.example.coffe_shop.user.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+
 import java.util.Map;
 
 import java.util.*;
@@ -24,15 +31,18 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserService {
 
+    private final JwtService jwtService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RedisService otpRedisService;
     private final EmailService emailService;
 
-    public ResponseMessage<String> updateUserActive(String userId,boolean active){
+
+
+    public ResponseMessage<String> updateUserActive(String userId, boolean active) {
         Optional<User> optionalUser = userRepository.findById(userId);
 
-        if(optionalUser.isEmpty()){
+        if (optionalUser.isEmpty()) {
             return new ResponseMessage<>(false, "Không tìm thấy user", null);
         }
         User user = optionalUser.get();
@@ -42,15 +52,15 @@ public class UserService {
     }
 
 
-    public ResponseMessage<String> updateUserRole(String userId, String adminEmail, UpdateUserRoleRequest request){
+    public ResponseMessage<String> updateUserRole(String userId, String adminEmail, UpdateUserRoleRequest request) {
         Optional<User> optionalUser = userRepository.findById(userId);
-        if(optionalUser.isEmpty()){
-            return new ResponseMessage<>(false,"Không tim thấy người dùng ",null);
+        if (optionalUser.isEmpty()) {
+            return new ResponseMessage<>(false, "Không tim thấy người dùng ", null);
         }
 
         User user = optionalUser.get();
 
-        if(user.getEmail().equals(adminEmail)){
+        if (user.getEmail().equals(adminEmail)) {
             return new ResponseMessage<>(false, "Không thể tự thay đổi quyền của chính mình!", null);
         }
         List<String> validRoles = List.of("USER", "MANAGER", "ADMIN");
@@ -64,21 +74,21 @@ public class UserService {
     }
 
 
-    public ResponseMessage<Map<String,String>> sendFogetPassWord(ForgetPasswordRequest request){
+    public ResponseMessage<Map<String, String>> sendFogetPassWord(ForgetPasswordRequest request) {
         Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
 
-        if(optionalUser.isEmpty()){
+        if (optionalUser.isEmpty()) {
             return new ResponseMessage<>(false, "Email không tồn tại!", null);
         }
 
         String otp = String.format("%06d", new Random().nextInt(999999));
         String token = UUID.randomUUID().toString();
         String jsonData = String.format("""
-        {
-          "email": "%s",
-          "otp": "%s"
-        }
-        """, request.getEmail(), otp);
+                {
+                  "email": "%s",
+                  "otp": "%s"
+                }
+                """, request.getEmail(), otp);
         otpRedisService.saveOtp(token, jsonData, 5); // TTL 5 phút
         emailService.sendOtpForgetPassWord(request.getEmail(), otp);
 
@@ -137,30 +147,29 @@ public class UserService {
     }
 
 
-    public ResponseMessage<List<User>> getAllUser(){
+    public ResponseMessage<List<User>> getAllUser() {
         List<User> userList = userRepository.findAll();
-        return new ResponseMessage<>(true,"Danh sách user ",userList);
+        return new ResponseMessage<>(true, "Danh sách user ", userList);
     }
 
-    public ResponseMessage<Optional<User>> getUserById(String id){
+    public ResponseMessage<Optional<User>> getUserById(String id) {
         Optional<User> optionalUser = userRepository.findById(id);
-        if(optionalUser.isEmpty()){
-            return  new ResponseMessage<>(false,"Không tìm thấy id User " ,null);
+        if (optionalUser.isEmpty()) {
+            return new ResponseMessage<>(false, "Không tìm thấy id User ", null);
         }
 
-        return new ResponseMessage<>(true,"Succes find by idUser" , optionalUser);
+        return new ResponseMessage<>(true, "Succes find by idUser", optionalUser);
     }
 
 
-    public ResponseMessage<String> deleteUserbyId(String id){
+    public ResponseMessage<String> deleteUserbyId(String id) {
         Optional<User> userOptional = userRepository.findById(id);
 
-        if(userOptional.isPresent()){
+        if (userOptional.isPresent()) {
             userRepository.deleteById(id);
-            return  new ResponseMessage<>(true,"Xoá thành công user : " + userOptional.get().getFullname(),null);
-        }
-        else  {
-            return  new ResponseMessage<>(false,"Id user không tồn tại  : " + id,null);
+            return new ResponseMessage<>(true, "Xoá thành công user : " + userOptional.get().getFullname(), null);
+        } else {
+            return new ResponseMessage<>(false, "Id user không tồn tại  : " + id, null);
         }
     }
 
@@ -181,10 +190,11 @@ public class UserService {
 
         return new ResponseMessage<>(true, "Đổi mật khẩu thành công", null);
     }
-    public ResponseMessage<User> updateUser (String email, UpdateUserRequest request){
+
+    public ResponseMessage<User> updateUser(String email, UpdateUserRequest request) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
-        if(optionalUser.isEmpty()){
-            return new ResponseMessage<>(false,"không tim thấy email user",null);
+        if (optionalUser.isEmpty()) {
+            return new ResponseMessage<>(false, "không tim thấy email user", null);
         }
         User user = optionalUser.get();
         user.setFullname(request.getFullname());
@@ -194,11 +204,11 @@ public class UserService {
         user.setAvatarUrl(request.getAvatarUrl());
         user.setAddress(request.getAddress());
         userRepository.save(user);
-        return  new ResponseMessage<>(true,"Update User thành công ", user);
+        return new ResponseMessage<>(true, "Update User thành công ", user);
     }
 
-    public ResponseMessage<String> forgetPassword(String email ){
+    public ResponseMessage<String> forgetPassword(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
-        return new ResponseMessage<>(true,"Hãy lưu lại mật khẩu " , null);
+        return new ResponseMessage<>(true, "Hãy lưu lại mật khẩu ", null);
     }
 }

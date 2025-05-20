@@ -1,11 +1,13 @@
 package com.example.coffe_shop.user.controller.user;
 
+import com.example.coffe_shop.auth.dto.JwtResponse;
 import com.example.coffe_shop.auth.model.UserPrincipal;
 import com.example.coffe_shop.auth.model.User;
 import com.example.coffe_shop.response.ResponseMessage;
 import com.example.coffe_shop.user.dto.ChangePasswordRequest;
 import com.example.coffe_shop.user.dto.UpdateUserRequest;
 import com.example.coffe_shop.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,8 @@ public class UserController {
     public ResponseEntity<ResponseMessage<String>> deleteUserById(@PathVariable String id) {
         return ResponseEntity.ok(userService.deleteUserbyId(id));
     }
+
+
 
     @PutMapping("/me/change-password")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")

@@ -8,6 +8,7 @@ import com.example.coffe_shop.response.ResponseMessage;
 import com.example.coffe_shop.user.dto.ForgetPasswordRequest;
 import com.example.coffe_shop.user.dto.ResetPasswordRequest;
 import com.example.coffe_shop.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +25,21 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
 
-    //sẽ gửi mã otp về email mà bạn đăng ký
+
+    // reshtoken khi acctoken hết hạn
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ResponseMessage<JwtResponse>> refreshToken(HttpServletRequest request) {
+        return ResponseEntity.ok(authService.refreshTokenFromCookie(request));
+    }
+
+
+    //Đăng ký tạo tài khoản user
     @PostMapping("/register")
     public ResponseEntity<ResponseMessage<Map<String, String>>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(authService.register(registerRequest));
     }
 
-    //nhâp email mà bạn đã đăng ký
+    //Gửi mã OTP tới email để confirm
     @PostMapping("/verify-otp")
     public ResponseEntity<ResponseMessage<User>> verifyOtp(@RequestBody VerifyOtpRequest request) {
         return ResponseEntity.ok(authService.verifyOtp(request));

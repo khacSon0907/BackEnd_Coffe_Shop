@@ -9,6 +9,7 @@ import com.example.coffe_shop.response.ResponseMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.MailSendException;
@@ -31,40 +32,55 @@ public class AuthService {
     private final RedisService otpRedisService;
     private final JwtService jwtService;
 
-//     refreshToken khi accen hết hạn
-//public ResponseMessage<JwtResponse> refreshToken(RefreshTokenRequest request) {
-//    String tokenSaved = otpRedisService.getRefreshToken(request.getEmail());
-//
-//    if (tokenSaved == null || !tokenSaved.equals(request.getRefreshToken())) {
-//        return new ResponseMessage(false, "Refresh token không hợp lệ hoặc đã hết hạn!", null);
-//    }
-//
-//    Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
-//    if (userOptional.isEmpty()) {
-//        return new ResponseMessage(false, "Email lỗi !", null);
-//
-//    }
-//
-//    User user = userOptional.get();
-//
-//    UserPrincipal userPrincipal = new UserPrincipal(
-//            user.getId(),
-//            user.getEmail(),
-//            user.getPassword(),
-//            user.getRole(),
-//            user.isActive()
-//    );
-//
-//    String newAccessToken = jwtService.generateAccessToken(userPrincipal);
-//
-//    return new ResponseMessage<>(true, " Làm mới accessToken thành công! ", new JwtResponse(newAccessToken));
-//
-//}
+    //         refreshToken khi accen hết hạn
+    public ResponseMessage<JwtResponse> refreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return new ResponseMessage<>(false, "Không tìm thấy cookie!", null);
+        }
+
+        String refreshToken = null;
+        for (Cookie cookie : cookies) {
+            if ("refreshToken".equals(cookie.getName())) {
+                refreshToken = cookie.getValue();
+                break;
+            }
+        }
+
+        if (refreshToken == null) {
+            return new ResponseMessage<>(false, "Refresh token không có trong cookie!", null);
+        }
+
+        // Lấy email từ Redis theo refresh token
+        String email = otpRedisService.getEmailFromRefreshToken(refreshToken);
+        if (email == null) {
+            return new ResponseMessage<>(false, "Token không hợp lệ hoặc đã hết hạn!", null);
+        }
+
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            return new ResponseMessage<>(false, "Không tìm thấy người dùng!", null);
+        }
+
+        User user = userOptional.get();
+        UserPrincipal userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getRole(),
+                user.isActive()
+        );
+
+        String newAccessToken = jwtService.generateAccessToken(userPrincipal);
+        return new ResponseMessage<>(true, "Làm mới access token thành công!", new JwtResponse(newAccessToken));
+    }
 
 
 
     // đăng ký tạo tài khoản user
     public ResponseMessage<Map<String, String>> register(RegisterRequest request) {
+
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return new ResponseMessage<>(false, "Email đã tồn tại!", null);
         }
